@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model tb_roles {
+  id_rol     Int           @id @default(autoincrement())
+  nombre_rol String        @db.VarChar(50)
+  usuarios   tb_usuarios[]
+}
+
+model tb_departamentos {
+  id_departamento     Int             @id @default(autoincrement())
+  nombre_departamento String          @db.VarChar(100)
+  municipios          tb_municipios[]
+}
+
+model tb_series {
+  id_serie    Int           @id @default(autoincrement())
+  letra_serie String        @db.VarChar(10)
+  agencias    tb_agencias[]
+}
+
+
+model tb_municipios {
+  id_municipio     Int              @id @default(autoincrement())
+  id_departamento  Int
+  departamento     tb_departamentos @relation(fields: [id_departamento], references: [id_departamento])
+  nombre_municipio String           @db.VarChar(100)
+  agencias         tb_agencias[]
+}
+
+model tb_usuarios {
+  id_usuario    Int           @id @default(autoincrement())
+  id_rol        Int
+  rol           tb_roles      @relation(fields: [id_rol], references: [id_rol])
+  nombre        String        @db.VarChar(150)
+  correo        String        @unique @db.VarChar(150)
+  password_hash String        @db.VarChar(255)
+  estado        Boolean       @default(true)
+  bitacoras     tb_bitacora[]
+}
+
+
+
+enum EstadoAgencia {
+  ACTIVA
+  INACTIVA
+}
+
+model tb_agencias {
+  id_agencia       Int           @id @default(autoincrement())
+  id_municipio     Int
+  municipio        tb_municipios @relation(fields: [id_municipio], references: [id_municipio])
+  id_serie         Int
+  serie            tb_series     @relation(fields: [id_serie], references: [id_serie])
+  nombre_agencia   String        @db.VarChar(100)
+  codigo_agencia   Int           @unique
+  direccion        String        @db.VarChar(255)
+  telefono         String        @db.VarChar(20)
+  horario_atencion String        @db.VarChar(255)
+  latitud          Decimal?      @db.Decimal(10, 8)
+  longitud         Decimal?      @db.Decimal(11, 8)
+  estado           EstadoAgencia @default(ACTIVA)
+  is_deleted       Boolean       @default(false)
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+}
+
+enum AccionBitacora {
+  INSERT
+  UPDATE
+  DELETE
+  SOFT_DELETE
+}
+
+model tb_bitacora {
+  id_bitacora          Int            @id @default(autoincrement())
+  id_usuario           Int
+  usuario              tb_usuarios    @relation(fields: [id_usuario], references: [id_usuario])
+  accion               AccionBitacora
+  tabla_afectada       String         @db.VarChar(50)
+  id_registro_afectado Int
+  detalles             Json?
+  fecha_hora           DateTime       @default(now())
+}
