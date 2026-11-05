@@ -1,0 +1,162 @@
+{
+  "info": {
+    "_postman_id": "cooperativa-coban-api-2026",
+    "name": "Cooperativa Coban - Catálogo de Agencias API",
+    "description": "Colección de endpoints para la prueba técnica de Cooperativa Cobán. Incluye Autenticación JWT, Catálogos y CRUD de Agencias.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"admin@cooperativacoban.com.gt\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login (Consulta)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"lector@cooperativacoban.com.gt\",\n  \"password\": \"consulta123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catálogos Auxiliares",
+      "item": [
+        {
+          "name": "Obtener Catálogos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "catalogos"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agencias (CRUD)",
+      "item": [
+        {
+          "name": "Listar Agencias (con filtro)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/agencias?search=Coban",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agencias"],
+              "query": [
+                { "key": "search", "value": "Coban" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener Agencia por ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/agencias/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agencias", "1"]
+            }
+          }
+        },
+        {
+          "name": "Crear Agencia (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_agencia\": \"Agencia San Pedro Carchá\",\n  \"codigo_agencia\": 1002,\n  \"direccion\": \"Barrio Central, Carchá\",\n  \"telefono\": \"77908877\",\n  \"horario_atencion\": \"8:00 AM - 4:30 PM\",\n  \"id_municipio\": 2,\n  \"id_serie\": 1,\n  \"latitud\": 15.4800,\n  \"longitud\": -90.3000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agencias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agencias"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Agencia (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_agencia\": \"Agencia San Pedro Carchá Modificada\",\n  \"direccion\": \"Calle Principal Zona 1, Carchá\",\n  \"telefono\": \"77908888\",\n  \"horario_atencion\": \"8:00 AM - 5:00 PM\",\n  \"estado\": \"ACTIVA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agencias/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agencias", "1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Agencia (Soft Delete - Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/agencias/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agencias", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
