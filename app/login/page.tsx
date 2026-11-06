@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Shield, Lock, Mail, AlertCircle, Building2 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [correo, setCorreo] = useState('')
