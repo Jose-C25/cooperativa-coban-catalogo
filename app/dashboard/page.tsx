@@ -3,23 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import {
-  Building2,
-  Plus,
-  Search,
-  LogOut,
-  MapPin,
-  Phone,
-  Clock,
-  Edit2,
-  Trash2,
-  X,
-  ShieldCheck,
-  Filter,
-  Eye,
-  CheckCircle,
-} from 'lucide-react'
+import { Building2, MapPin, Phone, Clock, X } from 'lucide-react'
 import DashboardMetrics from '@/components/DashboardMetrics'
+
+// Componentes refactorizados
+import DashboardHeader from '@/components/dashboard/DashboardHeader'
+import AgenciasFiltros from '@/components/dashboard/AgenciasFiltros'
+import AgenciasTable from '@/components/dashboard/AgenciasTable'
 
 const DynamicMap = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -57,8 +47,6 @@ export default function DashboardPage() {
   const [agencias, setAgencias] = useState<Agencia[]>([])
   const [catalogos, setCatalogos] = useState<Catalogos>({ departamentos: [], municipios: [], series: [] })
   const [loading, setLoading] = useState(true)
-  
-  // Estado para el rol del usuario (por defecto Consulta para proteger la UI)
   const [userRole, setUserRole] = useState<string>('Consulta')
 
   // Filtros y Selección
@@ -84,7 +72,6 @@ export default function DashboardPage() {
   })
   const [errorModal, setErrorModal] = useState('')
 
-  // Cargar rol del usuario autenticado
   useEffect(() => {
     let active = true
     async function loadUserRole() {
@@ -102,7 +89,6 @@ export default function DashboardPage() {
     return () => { active = false }
   }, [])
 
-  // Cargar catálogos
   useEffect(() => {
     let active = true
     async function loadCatalogos() {
@@ -120,10 +106,8 @@ export default function DashboardPage() {
     return () => { active = false }
   }, [])
 
-  // Cargar agencias según filtros
   useEffect(() => {
     let active = true
-
     async function getAgencias() {
       const params = new URLSearchParams()
       if (searchTerm) params.append('search', searchTerm)
@@ -149,9 +133,7 @@ export default function DashboardPage() {
         if (active) setLoading(false)
       }
     }
-
     getAgencias()
-
     return () => { active = false }
   }, [searchTerm, selectedMunicipio, selectedEstado, router])
 
@@ -223,7 +205,6 @@ export default function DashboardPage() {
   const handleSubmitModal = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorModal('')
-
     const url = editingAgencia ? `/api/agencias/${editingAgencia.id_agencia}` : '/api/agencias'
     const method = editingAgencia ? 'PUT' : 'POST'
 
@@ -233,13 +214,9 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
-
       const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Ocurrió un error al procesar la solicitud')
-      }
-
+      if (!res.ok) throw new Error(data.error || 'Ocurrió un error al procesar la solicitud')
+      
       setModalOpen(false)
       reloadAgencias()
     } catch (err: unknown) {
@@ -253,7 +230,6 @@ export default function DashboardPage() {
 
   const handleDeleteAgencia = async (id: number) => {
     if (!confirm('¿Está seguro de que desea inactivar esta agencia?')) return
-
     try {
       const res = await fetch(`/api/agencias/${id}`, { method: 'DELETE' })
       if (!res.ok) {
@@ -269,26 +245,19 @@ export default function DashboardPage() {
 
   const handleToggleEstado = async (agencia: Agencia) => {
     const nuevoEstado = agencia.estado === 'ACTIVA' ? 'INACTIVA' : 'ACTIVA'
-    const confirmMessage = `¿Desea cambiar el estado de la agencia a ${nuevoEstado}?`
-
-    if (!confirm(confirmMessage)) return
+    if (!confirm(`¿Desea cambiar el estado de la agencia a ${nuevoEstado}?`)) return
 
     try {
       const res = await fetch(`/api/agencias/${agencia.id_agencia}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...agencia,
-          estado: nuevoEstado,
-        }),
+        body: JSON.stringify({ ...agencia, estado: nuevoEstado }),
       })
-
       if (!res.ok) {
         const data = await res.json()
         alert(data.error || 'Error al actualizar el estado')
         return
       }
-
       reloadAgencias()
     } catch (err) {
       console.error('Error al cambiar estado:', err)
@@ -299,292 +268,92 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <header className="bg-[#0033A0] text-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-              <Building2 className="w-7 h-7 text-[#82BC00]" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg leading-tight tracking-wide">
-                COOPERATIVA COBÁN
-              </h1>
-              <p className="text-xs text-emerald-300 font-semibold tracking-wider uppercase">
-                Catálogo de Agencias — es Mi Coope
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-xs">
-              <ShieldCheck className="w-4 h-4 text-[#82BC00]" />
-              <span className="font-medium">Panel de {userRole}</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-sm"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Cerrar Sesión</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader userRole={userRole} onLogout={handleLogout} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
         <DashboardMetrics agencias={agencias} userRole={userRole} />
         
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="flex flex-1 flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar por agencia o dirección..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0033A0] outline-none text-slate-800"
-              />
-            </div>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="w-full lg:w-5/12 flex flex-col gap-6 order-1">
+            <AgenciasFiltros 
+              searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+              selectedMunicipio={selectedMunicipio} setSelectedMunicipio={setSelectedMunicipio}
+              selectedEstado={selectedEstado} setSelectedEstado={setSelectedEstado}
+              municipios={catalogos.municipios} userRole={userRole}
+              onNewAgencia={() => handleOpenModal()} 
+            />
 
-            <div className="relative min-w-[180px]">
-              <Filter className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <select
-                value={selectedMunicipio}
-                onChange={(e) => setSelectedMunicipio(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0033A0] outline-none text-slate-800 appearance-none bg-white"
-              >
-                <option value="">Todos los Municipios</option>
-                {catalogos.municipios.map((m) => (
-                  <option key={m.id_municipio} value={m.id_municipio}>
-                    {m.nombre_municipio}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="relative min-w-[150px]">
-              <select
-                value={selectedEstado}
-                onChange={(e) => setSelectedEstado(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0033A0] outline-none text-slate-800 bg-white font-medium"
-              >
-                <option value="TODAS">Todos los Estados</option>
-                <option value="ACTIVA">Solo Activas</option>
-                <option value="INACTIVA">Solo Inactivas</option>
-              </select>
-            </div>
+            <AgenciasTable 
+              agencias={agencias} loading={loading} userRole={userRole}
+              selectedAgenciaId={selectedAgenciaId} onSelect={setSelectedAgenciaId}
+              onEdit={handleOpenModal} onDelete={handleDeleteAgencia} onToggleStatus={handleToggleEstado}
+            />
           </div>
 
-          {userRole === 'Administrador' && (
-            <button
-              onClick={() => handleOpenModal()}
-              className="w-full md:w-auto bg-[#0033A0] hover:bg-[#002266] text-white font-semibold text-sm px-4 py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4 text-[#82BC00]" />
-              <span>Nueva Agencia</span>
-            </button>
-          )}
-        </div>
+          <div className="w-full lg:w-7/12 order-2">
+            <div className="sticky top-24 space-y-4">
+              {agenciaDetalle && (
+                <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-xl shadow-sm relative transition-all">
+                  <button
+                    onClick={() => setSelectedAgenciaId(null)}
+                    className="absolute top-3 right-3 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  <div className="flex items-center gap-2 text-[#0033A0] font-bold text-lg mb-2">
+                    <Building2 className="w-6 h-6 text-[#82BC00]" />
+                    <span>{agenciaDetalle.nombre_agencia}</span>
+                    <span className="text-xs bg-[#0033A0] text-white px-2 py-0.5 rounded-md font-normal">
+                      Código #{agenciaDetalle.codigo_agencia}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
+                    <p className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{agenciaDetalle.direccion}, {agenciaDetalle.municipio?.nombre_municipio}</span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{agenciaDetalle.telefono}</span>
+                    </p>
+                    <p className="flex items-center gap-2 sm:col-span-2">
+                      <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{agenciaDetalle.horario_atencion}</span>
+                    </p>
+                  </div>
+                </div>
+              )}
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-[#0033A0]" />
-              Ubicación Geográfica de Agencias
-            </h2>
-            {selectedAgenciaId && (
-              <button
-                onClick={() => setSelectedAgenciaId(null)}
-                className="text-xs text-[#0033A0] hover:underline font-semibold"
-              >
-                Resetear Zoom del Mapa
-              </button>
-            )}
-          </div>
-
-          <DynamicMap
-            agencias={agencias}
-            selectedAgenciaId={selectedAgenciaId}
-            onSelectAgencia={(id) => setSelectedAgenciaId(id)}
-          />
-        </div>
-
-        {agenciaDetalle && (
-          <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-xl shadow-sm relative">
-            <button
-              onClick={() => setSelectedAgenciaId(null)}
-              className="absolute top-3 right-3 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-2 text-[#0033A0] font-bold text-lg mb-2">
-              <Building2 className="w-6 h-6 text-[#82BC00]" />
-              <span>{agenciaDetalle.nombre_agencia}</span>
-              <span className="text-xs bg-[#0033A0] text-white px-2 py-0.5 rounded-md font-normal">
-                Código #{agenciaDetalle.codigo_agencia}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-700">
-              <p className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-600" />
-                <span><strong>Dirección:</strong> {agenciaDetalle.direccion}, {agenciaDetalle.municipio?.nombre_municipio}</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-emerald-600" />
-                <span><strong>Teléfono:</strong> {agenciaDetalle.telefono}</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-emerald-600" />
-                <span><strong>Días y Horarios:</strong> {agenciaDetalle.horario_atencion}</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 text-sm">
-              Listado de Agencias Registradas
-            </h3>
-            <span className="text-xs text-slate-500">
-              Mostrando {agencias.length} registros
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-100/70 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                  <th className="px-6 py-3">Código</th>
-                  <th className="px-6 py-3">Agencia</th>
-                  <th className="px-6 py-3">Ubicación</th>
-                  <th className="px-6 py-3">Contacto / Horario</th>
-                  <th className="px-6 py-3">Estado</th>
-                  <th className="px-6 py-3 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 text-xs text-slate-700">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-400">
-                      Cargando agencias...
-                    </td>
-                  </tr>
-                ) : agencias.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-500">
-                      No se encontraron agencias con los filtros aplicados.
-                    </td>
-                  </tr>
-                ) : (
-                  agencias.map((agencia) => (
-                    <tr
-                      key={agencia.id_agencia}
-                      className={`hover:bg-slate-50 transition cursor-pointer ${
-                        selectedAgenciaId === agencia.id_agencia ? 'bg-blue-50/60' : ''
-                      }`}
-                      onClick={() => setSelectedAgenciaId(agencia.id_agencia)}
+              <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-[#0033A0]" />
+                    Ubicación Geográfica
+                  </h2>
+                  {selectedAgenciaId && (
+                    <button
+                      onClick={() => setSelectedAgenciaId(null)}
+                      className="text-xs text-[#0033A0] hover:underline font-semibold"
                     >
-                      <td className="px-6 py-4 font-bold text-[#0033A0]">
-                        #{agencia.codigo_agencia}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-slate-900">{agencia.nombre_agencia}</div>
-                        <div className="text-[11px] text-slate-500">Serie {agencia.serie?.letra_serie}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium">{agencia.direccion}</div>
-                        <div className="text-[11px] text-slate-500">{agencia.municipio?.nombre_municipio}</div>
-                      </td>
-                      <td className="px-6 py-4 space-y-1">
-                        <div className="flex items-center gap-1 text-slate-600">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          <span>{agencia.telefono}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-slate-500 text-[11px]">
-                          <Clock className="w-3 h-3 text-slate-400" />
-                          <span>{agencia.horario_atencion}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={(e) => {
-                            if (userRole === 'Administrador') {
-                              e.stopPropagation()
-                              handleToggleEstado(agencia)
-                            } else {
-                              e.stopPropagation()
-                            }
-                          }}
-                          disabled={userRole !== 'Administrador'}
-                          title="Estado"
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition ${
-                            userRole === 'Administrador' ? 'hover:scale-105 cursor-pointer' : 'cursor-default'
-                          } ${
-                            agencia.estado === 'ACTIVA'
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                              : 'bg-rose-100 text-rose-800 border border-rose-300'
-                          }`}
-                        >
-                          {agencia.estado === 'ACTIVA' ? (
-                            <CheckCircle className="w-3 h-3" />
-                          ) : (
-                            <X className="w-3 h-3" />
-                          )}
-                          {agencia.estado}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-1" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => setSelectedAgenciaId(agencia.id_agencia)}
-                          className="p-1.5 text-slate-600 hover:text-[#0033A0] hover:bg-slate-100 rounded-lg transition"
-                          title="Ver en Mapa"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        
-                        {userRole === 'Administrador' && (
-                          <>
-                            <button
-                              onClick={() => handleOpenModal(agencia)}
-                              className="p-1.5 text-slate-600 hover:text-[#0033A0] hover:bg-slate-100 rounded-lg transition"
-                              title="Editar Agencia"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            {agencia.estado === 'ACTIVA' ? (
-                              <button
-                                onClick={() => handleDeleteAgencia(agencia.id_agencia)}
-                                className="p-1.5 text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded-lg transition"
-                                title="Inactivar Agencia"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleToggleEstado(agencia)}
-                                className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition"
-                                title="Reactivar Agencia"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      Ver todas
+                    </button>
+                  )}
+                </div>
+
+                <DynamicMap
+                  agencias={agencias}
+                  selectedAgenciaId={selectedAgenciaId}
+                  onSelectAgencia={(id: number) => setSelectedAgenciaId(id)}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </main>
 
+      {/* MODAL RESTAURADO */}
       {modalOpen && userRole === 'Administrador' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 my-8">
             <div className="bg-[#0033A0] text-white px-6 py-4 flex items-center justify-between">
               <h3 className="font-bold text-base flex items-center gap-2">
@@ -608,9 +377,7 @@ export default function DashboardPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Código *
-                  </label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Código *</label>
                   <input
                     type="number"
                     required
@@ -623,9 +390,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Serie *
-                  </label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Serie *</label>
                   <select
                     value={formData.id_serie}
                     onChange={(e) => setFormData({ ...formData, id_serie: e.target.value })}
@@ -641,9 +406,7 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Nombre de Agencia *
-                </label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre de Agencia *</label>
                 <input
                   type="text"
                   required
@@ -655,9 +418,7 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Municipio *
-                </label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Municipio *</label>
                 <select
                   value={formData.id_municipio}
                   onChange={(e) => setFormData({ ...formData, id_municipio: e.target.value })}
@@ -672,9 +433,7 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Dirección *
-                </label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Dirección *</label>
                 <input
                   type="text"
                   required
@@ -695,12 +454,12 @@ export default function DashboardPage() {
                     lat: parseFloat(formData.latitud) || 15.4708,
                     lng: parseFloat(formData.longitud) || -90.3708,
                   }}
-                  onPickCoords={(lat, lng) => {
-                    setFormData({
-                      ...formData,
+                  onPickCoords={(lat: number, lng: number) => {
+                    setFormData((prevData) => ({
+                      ...prevData,
                       latitud: lat.toFixed(6),
                       longitud: lng.toFixed(6),
-                    })
+                    }))
                   }}
                 />
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 font-mono pt-1">
@@ -709,11 +468,9 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-             <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Teléfono *
-                  </label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Teléfono *</label>
                   <input
                     type="text"
                     required
@@ -725,9 +482,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Días y Horarios *
-                  </label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Días y Horarios *</label>
                   <input
                     type="text"
                     required
@@ -740,9 +495,7 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  Estado
-                </label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Estado</label>
                 <select
                   value={formData.estado}
                   onChange={(e) => setFormData({ ...formData, estado: e.target.value })}

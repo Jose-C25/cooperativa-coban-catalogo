@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, memo } from 'react'
 import L from 'leaflet'
 
-// Solución al problema de rutas de iconos de Leaflet
 const iconAgencia = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -34,36 +33,33 @@ interface MapProps {
   onPickCoords?: (lat: number, lng: number) => void
 }
 
-export default function Map({
+const Map = ({
   agencias = [],
   selectedAgenciaId = null,
   onSelectAgencia,
   isPickerMode = false,
   pickerCoords = null,
   onPickCoords,
-}: MapProps) {
+}: MapProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
 
     const container = containerRef.current
-
-    // 1. Limpieza agresiva preventiva para Fast Refresh sin usar "any"
     const node = container as HTMLDivElement & { _leaflet_id?: unknown }
+    
     if (node._leaflet_id) {
       delete node._leaflet_id
     }
     container.innerHTML = ''
 
-    // 2. Crear un contenedor hijo exclusivo para Leaflet
     const mapDiv = document.createElement('div')
     mapDiv.style.width = '100%'
     mapDiv.style.height = '100%'
     container.appendChild(mapDiv)
 
-    // 3. Inicializar Mapa
-    const defaultCenter: [number, number] = [15.4708, -90.3708] // Cobán
+    const defaultCenter: [number, number] = [15.4708, -90.3708]
     const initialCenter = isPickerMode && pickerCoords
       ? [pickerCoords.lat, pickerCoords.lng]
       : defaultCenter
@@ -78,7 +74,6 @@ export default function Map({
       attribution: '&copy; OpenStreetMap',
     }).addTo(map)
 
-    // 4. Lógica de Marcadores
     if (isPickerMode) {
       if (pickerCoords) {
         L.marker([pickerCoords.lat, pickerCoords.lng], { icon: iconAgencia })
@@ -101,7 +96,6 @@ export default function Map({
 
         if (isSelected) targetCoords = [lat, lng]
 
-        // Popups actualizados con "Días y Horarios"
         const marker = L.marker([lat, lng], { icon: iconAgencia })
           .bindPopup(`
             <div style="min-width: 190px; font-family: sans-serif;">
@@ -150,3 +144,18 @@ export default function Map({
     </div>
   )
 }
+
+// Validación de renderizado: Ignora cambios de texto en el padre,
+// redibuja solo si cambian las coordenadas, el ID seleccionado o la lista de agencias.
+export default memo(Map, (prevProps, nextProps) => {
+  if (prevProps.selectedAgenciaId !== nextProps.selectedAgenciaId) return false
+  if (prevProps.isPickerMode !== nextProps.isPickerMode) return false
+  if (prevProps.pickerCoords?.lat !== nextProps.pickerCoords?.lat) return false
+  if (prevProps.pickerCoords?.lng !== nextProps.pickerCoords?.lng) return false
+  
+  const prevIds = prevProps.agencias?.map(a => a.id_agencia).join(',')
+  const nextIds = nextProps.agencias?.map(a => a.id_agencia).join(',')
+  if (prevIds !== nextIds) return false
+
+  return true
+})
