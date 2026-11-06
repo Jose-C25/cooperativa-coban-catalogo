@@ -17,7 +17,7 @@ export default function DashboardHeader({ userRole, onLogout }: Props) {
           <div>
             <h1 className="font-bold text-lg leading-tight tracking-wide">COOPERATIVA COBÁN</h1>
             <p className="text-xs text-emerald-300 font-semibold tracking-wider uppercase">
-              Catálogo de Agencias — es Mi Coope
+              Catálogo de Agencias — es MICOOPE
             </p>
           </div>
         </div>

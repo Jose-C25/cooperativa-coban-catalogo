@@ -53,7 +53,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight">COOPERATIVA COBÁN</h1>
           <p className="text-xs tracking-widest text-emerald-300 font-semibold uppercase mt-1">
-            es Mi Coope
+            es MICOOPE
           </p>
           <p className="text-xs text-blue-100 mt-2">Catálogo Oficial de Agencias</p>
         </div>

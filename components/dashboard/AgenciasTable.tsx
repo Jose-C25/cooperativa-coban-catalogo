@@ -66,8 +66,13 @@ export default function AgenciasTable({
                   onClick={() => onSelect(agencia.id_agencia)}
                 >
                   <td className="px-4 py-4">
-                    <div className="font-bold text-[#0033A0] mb-1">
-                      #{agencia.codigo_agencia} - {agencia.nombre_agencia}
+                    <div className="font-bold text-[#0033A0] mb-1 flex items-center gap-2">
+                      <span>#{agencia.codigo_agencia} - {agencia.nombre_agencia}</span>
+                      {agencia.serie?.letra_serie && (
+                        <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium border border-slate-200">
+                          Serie {agencia.serie.letra_serie}
+                        </span>
+                      )}
                     </div>
                     <div className="text-[11px] text-slate-500 mb-2">
                       {agencia.direccion}, {agencia.municipio?.nombre_municipio}

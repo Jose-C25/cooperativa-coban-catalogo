@@ -300,13 +300,18 @@ export default function DashboardPage() {
                   >
                     <X className="w-5 h-5" />
                   </button>
-                  <div className="flex items-center gap-2 text-[#0033A0] font-bold text-lg mb-2">
-                    <Building2 className="w-6 h-6 text-[#82BC00]" />
-                    <span>{agenciaDetalle.nombre_agencia}</span>
-                    <span className="text-xs bg-[#0033A0] text-white px-2 py-0.5 rounded-md font-normal">
-                      Código #{agenciaDetalle.codigo_agencia}
-                    </span>
-                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-[#0033A0] font-bold text-lg mb-2">
+                      <Building2 className="w-6 h-6 text-[#82BC00]" />
+                      <span>{agenciaDetalle.nombre_agencia}</span>
+                      <span className="text-xs bg-[#0033A0] text-white px-2 py-0.5 rounded-md font-normal">
+                        Código #{agenciaDetalle.codigo_agencia}
+                      </span>
+                      {agenciaDetalle.serie?.letra_serie && (
+                        <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-medium">
+                          Serie {agenciaDetalle.serie.letra_serie}
+                        </span>
+                      )}
+                    </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
                     <p className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -351,7 +356,7 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* MODAL RESTAURADO */}
+      {}
       {modalOpen && userRole === 'Administrador' && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 my-8">
